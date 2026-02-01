@@ -4,9 +4,12 @@ pymongo==4.6.1
 motor==3.3.2
 pydantic==2.6.1
 pydantic-settings==2.1.0
+email-validator
 langgraph==0.0.21
 groq==0.4.2
-google-cloud-vision==3.7.2
+google-cloud-vision
+google-auth-oauthlib
+google-api-python-client==3.7.2
 sentence-transformers==2.3.1
 python-dotenv==1.0.1
 python-multipart==0.0.7

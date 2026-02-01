@@ -1,4 +1,4 @@
-from motor.motor_asyncio import AsyncIOMotorClient
+from motor.motor_asyncio import AsyncIOMotorClient, AsyncIOMotorGridFSBucket
 from app.config import settings
 from app.repositories.invoice import InvoiceRepository
 from app.repositories.vendor import VendorRepository
@@ -11,6 +11,7 @@ from app.models.config import CompanyConfig
 
 class Database:
     client: AsyncIOMotorClient = None
+    fs: AsyncIOMotorGridFSBucket = None
     
     # Repositories
     invoices: InvoiceRepository = None
@@ -22,6 +23,7 @@ class Database:
         """Initialize database connection and repositories."""
         self.client = AsyncIOMotorClient(settings.MONGODB_URL)
         db = self.client[settings.DB_NAME]
+        self.fs = AsyncIOMotorGridFSBucket(db)
         
         # Initialize repositories with their respective collections and models
         self.invoices = InvoiceRepository(db.invoices, Invoice)

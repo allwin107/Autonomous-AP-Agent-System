@@ -1,3 +1,4 @@
+from typing import Optional
 from app.repositories.base import BaseRepository
 from app.models.vendor import Vendor
 
