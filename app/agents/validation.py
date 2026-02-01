@@ -37,7 +37,12 @@ class ValidationAgent:
             
             # 2. Duplicate Detection
             dup_result = await duplicate_detector.check_duplicates(
-                invoice_id, data.vendor_name, data.invoice_number, data.total, data.invoice_date
+                invoice_id, 
+                data.vendor_name, 
+                data.invoice_number, 
+                data.total, 
+                data.invoice_date,
+                data.line_items
             )
             
             # 3. VAT Validation
@@ -76,6 +81,7 @@ class ValidationAgent:
                 vat_valid=vat_result["valid"],
                 vendor_approved=vendor_approved,
                 fraud_score=fraud_result["fraud_score"],
+                duplicate_of_id=dup_result.get("conflicting_invoice_id"),
                 flags=flags
             )
             

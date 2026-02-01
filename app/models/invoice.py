@@ -45,6 +45,7 @@ class ValidationResults(MongoModel):
     vendor_approved: bool = Field(False, description="True if vendor is in approved list")
     fraud_score: float = Field(0.0, ge=0.0, le=1.0, description="0.0 to 1.0 fraud risk score")
     flags: List[str] = Field(default_factory=list, description="List of risk flags raised")
+    duplicate_of_id: Optional[str] = Field(None, description="ID of the original invoice if duplicate")
     validation_timestamp: datetime = Field(default_factory=datetime.utcnow)
 
 class MatchingResults(MongoModel):
