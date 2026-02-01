@@ -9,6 +9,8 @@ from app.api.auth import get_current_active_user, get_admin_user, User
 from app.models.invoice import Invoice, InvoiceStatus, ValidationResults
 from app.workflow.graph import invoice_workflow
 from app.workflow.state import InvoiceState
+from app.guardrails.permissions import Permission
+from app.guardrails.decorators import require_permission, enforce_sod
 
 router = APIRouter(prefix="/api/approvals", tags=["Approvals"])
 
@@ -56,10 +58,11 @@ async def list_pending_approvals(current_user: User = Depends(get_current_active
     return await db.invoices.find({"status": InvoiceStatus.AWAITING_APPROVAL})
 
 @router.post("/{invoice_id}/approve", response_model=ApprovalResponse)
+@enforce_sod(action="approve")
 async def approve_invoice(
     invoice_id: str, 
     decision: ApprovalDecision = Body(...),
-    current_user: User = Depends(get_admin_user) # Only admins for now
+    current_user: User = Depends(require_permission(Permission.APPROVE_INVOICE))
 ):
     invoice = await db.invoices.get_by_field("invoice_id", invoice_id)
     if not invoice or invoice.status != InvoiceStatus.AWAITING_APPROVAL:
@@ -83,10 +86,11 @@ async def approve_invoice(
     return {"message": "Invoice Approved", "invoice_status": new_status}
 
 @router.post("/{invoice_id}/reject", response_model=ApprovalResponse)
+@enforce_sod(action="reject") # SoD might be less strict for rejection, but good policy
 async def reject_invoice(
     invoice_id: str, 
     decision: ApprovalDecision = Body(...),
-    current_user: User = Depends(get_admin_user)
+    current_user: User = Depends(require_permission(Permission.REJECT_INVOICE))
 ):
     invoice = await db.invoices.get_by_field("invoice_id", invoice_id)
     if not invoice or invoice.status != InvoiceStatus.AWAITING_APPROVAL:
