@@ -9,8 +9,15 @@ from app.agents.validation import validation_agent
 from app.agents.matching import matching_agent
 from app.agents.approval import approval_agent
 from app.agents.payment import payment_agent
+from app.agents.recording import recording_agent
 
 logger = logging.getLogger(__name__)
+
+# ... existing code ...
+
+async def recording_node(state: InvoiceState) -> InvoiceState:
+    logger.info(f"Node: Accounting Recording for {state['invoice_id']}")
+    return await recording_agent.recording_node(state)
 
 # Define Node Wrappers
 # These simple wrappers calling the agent's logic allow us to keep the agent code independent of LangGraph if needed

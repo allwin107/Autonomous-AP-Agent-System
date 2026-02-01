@@ -32,6 +32,21 @@ class ApprovalRule(MongoModel):
 class ApprovalMatrix(MongoModel):
     rules: List[ApprovalRule] = []
 
+class GLMapping(MongoModel):
+    """Mapping of categories to GL Codes."""
+    default_expense_gl: str = "7400" # Office Supplies / Misc
+    vat_recoverable_gl: str = "1510"
+    accounts_payable_gl: str = "2100"
+    
+    # Category overrides, e.g. {"Rent": "7200", "Salaries": "7100"}
+    category_map: Dict[str, str] = {
+        "Office Supplies": "7400",
+        "Salaries": "7100",
+        "Rent": "7200",
+        "Hardware": "7400",
+        "Software": "7400"
+    }
+
 class CompanyConfig(MongoModel):
     """
     Multi-tenant configuration document.
@@ -44,6 +59,7 @@ class CompanyConfig(MongoModel):
     validation_rules: ValidationRules = Field(default_factory=ValidationRules)
     matching_tolerances: MatchingTolerances = Field(default_factory=MatchingTolerances)
     approval_matrix: ApprovalMatrix = Field(default_factory=ApprovalMatrix)
+    gl_mapping: GLMapping = Field(default_factory=GLMapping)
     
     system_enabled: bool = True
     notification_email: Optional[str] = None
