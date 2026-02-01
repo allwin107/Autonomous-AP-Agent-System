@@ -8,6 +8,7 @@ from app.tools.vat_validator import vat_validator
 from app.tools.duplicate_detector import duplicate_detector
 from app.tools.fraud_detector import fraud_detector
 from app.tools.verification_tool import verification_tool
+from app.agents.vat_corrector import vat_corrector
 
 logger = logging.getLogger(__name__)
 
@@ -110,8 +111,9 @@ class ValidationAgent:
             elif fraud_result["fraud_score"] > 0.7:
                  next_state = InvoiceStatus.EXCEPTION
             elif not vat_result["valid"] and data.vat_amount > 0:
-                 # Strict on VAT? Maybe just flag but proceed to matching if amount is small?
-                 # Let's be safe and EXCEPTION
+                 # Trigger automated correction request
+                 logger.warning(f"VAT mismatch for {invoice_id}. Sending correction request.")
+                 await vat_corrector.generate_correction_request(invoice)
                  next_state = InvoiceStatus.EXCEPTION
             elif not vendor_approved:
                  # If vendor unknown, might need to create it or review
