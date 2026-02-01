@@ -38,30 +38,34 @@ class VendorCommunication:
         logger.info(f"Email {email_id} sent to {vendor_email}: {subject}")
         return email_id
 
-    def generate_correction_request_email(self, invoice_number: str, subtotal: float, current_vat: float, expected_vat: float) -> str:
+    def generate_vat_explanation(self, subtotal: float, rate: float = 0.20) -> str:
+        """
+        Generates a text explanation of the VAT calculation.
+        """
+        return f"Expected VAT is calculated as {rate*100:.0f}% of the subtotal (£{subtotal:,.2f})."
+
+    def generate_correction_request_email(self, vendor_name: str, invoice_number: str, subtotal: float, current_vat: float, expected_vat: float) -> str:
         """
         Generates the formatted string for a VAT correction request.
         """
-        diff = expected_vat - current_vat
+        difference = expected_vat - current_vat
+        explanation = self.generate_vat_explanation(subtotal)
         
         template = f"""
-Subject: Correction Required: VAT Mismatch on Invoice {invoice_number}
+Subject: VAT Correction Required - Invoice {invoice_number}
 
-Dear Vendor,
+Dear {vendor_name},
 
-We are writing regarding invoice {invoice_number} submitted to our system.
+We've identified a VAT calculation error on invoice {invoice_number}.
 
-Our automated validation has detected a discrepancy in the VAT calculation:
-- Invoice Subtotal: {subtotal:.2f}
-- VAT Amount on Invoice: {current_vat:.2f}
-- Expected VAT (20%): {expected_vat:.2f}
-- Discrepancy: {diff:.2f}
+Current VAT: £{current_vat:,.2f}
+Expected VAT: £{expected_vat:,.2f}
+Difference: £{difference:,.2f}
 
-Please provide a corrected invoice with the accurate VAT calculations to ensure timely processing and payment. 
+Please send a corrected invoice with the proper VAT calculation.
 
-If you believe this calculation is correct (e.g., mixed VAT rates apply), please provide a detailed breakdown of the tax rates used.
-
-Until a correction is received or clarified, this invoice cannot proceed to payment.
+Calculation Details:
+{explanation}
 
 Regards,
 Accounts Payable Department

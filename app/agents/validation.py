@@ -114,7 +114,7 @@ class ValidationAgent:
                  # Trigger automated correction request
                  logger.warning(f"VAT mismatch for {invoice_id}. Sending correction request.")
                  await vat_corrector.generate_correction_request(invoice)
-                 next_state = InvoiceStatus.EXCEPTION
+                 next_state = InvoiceStatus.AWAITING_CORRECTION
             elif not vendor_approved:
                  # If vendor unknown, might need to create it or review
                  next_state = InvoiceStatus.AWAITING_APPROVAL # Or some onboarding state

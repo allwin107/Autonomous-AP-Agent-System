@@ -64,7 +64,7 @@ async def test_vat_discrepancy_triggers_corrector():
         result = await agent.validation_node(state)
         
         # Assertions
-        assert result["current_state"] == InvoiceStatus.EXCEPTION
+        assert result["current_state"] == InvoiceStatus.AWAITING_CORRECTION
         
         # Check if correction request was triggered (via notification)
         mock_notif.send_notification.assert_called()
@@ -79,8 +79,9 @@ async def test_vat_discrepancy_triggers_corrector():
         notif_args = mock_notif.send_notification.call_args
         # users=[email], ...
         body = notif_args.kwargs["message"]
-        assert "Expected VAT (20%): 20.00" in body
-        assert "VAT Amount on Invoice: 10.00" in body
+        assert "Expected VAT: £20.00" in body
+        assert "Current VAT: £10.00" in body
+        assert "Expected VAT is calculated as 20% of the subtotal (£100.00)" in body
 
 @pytest.mark.asyncio
 async def test_detect_vat_error_logic():

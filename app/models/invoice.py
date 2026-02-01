@@ -16,6 +16,7 @@ class InvoiceStatus(str, Enum):
     PAID = "PAID"
     REJECTED = "REJECTED"
     EXCEPTION = "EXCEPTION"
+    AWAITING_CORRECTION = "AWAITING_CORRECTION"
 
 class LineItem(MongoModel):
     """Represents a single line item on an invoice."""

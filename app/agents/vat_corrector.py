@@ -1,5 +1,5 @@
 import logging
-from datetime import datetime
+from datetime import datetime, timedelta
 from typing import Dict, Any, Optional
 from app.models.invoice import Invoice, InvoiceData
 from app.tools.vat_validator import vat_validator
@@ -39,7 +39,7 @@ class VATCorrector:
             }
         return None
 
-    async def generate_correction_request(self, invoice: Invoice):
+    async def generate_correction_request(self, invoice: Invoice, timeout_days: int = 7):
         """
         Generates and tracks a correction request for a flawed VAT invoice.
         """
@@ -55,6 +55,7 @@ class VATCorrector:
             return
 
         email_body = vendor_communication.generate_correction_request_email(
+            vendor_name=vendor.name,
             invoice_number=invoice.data.invoice_number,
             subtotal=error["subtotal"],
             current_vat=error["current_vat"],
@@ -68,16 +69,54 @@ class VATCorrector:
         )
         
         # Track status in invoice metadata
+        due_date = datetime.utcnow() + timedelta(days=timeout_days)
         update_data = {
+            "status": "AWAITING_CORRECTION",
             "validation.vat_valid": False,
             "validation.flags": list(set(invoice.validation.flags + ["VAT_MISMATCH", "CORRECTION_REQUESTED"])),
             "correction_tracking": {
                 "request_id": email_id,
                 "requested_at": datetime.utcnow(),
-                "status": "AWAITING_REPLACEMENT"
+                "due_date": due_date,
+                "status": "AWAITING_REPLACEMENT",
+                "overridden": False
             }
         }
         await db.invoices.update(invoice.invoice_id, update_data)
-        logger.info(f"Correction request {email_id} sent for invoice {invoice.invoice_id}")
+        logger.info(f"Correction request {email_id} sent for invoice {invoice.invoice_id}. Due: {due_date}")
+
+    async def handle_timeout(self, invoice_id: str):
+        """
+        Fires if vendor hasn't responded by due_date. 
+        In practice, would be called by a cron/scheduled task.
+        """
+        invoice = await db.invoices.get_by_field("invoice_id", invoice_id)
+        if not invoice or invoice.status != "AWAITING_CORRECTION":
+            return
+            
+        tracking = getattr(invoice, "correction_tracking", {})
+        if not tracking or tracking.get("overridden"):
+            return
+            
+        if datetime.utcnow() > tracking.get("due_date", datetime.utcnow()):
+             logger.warning(f"VAT Correction timeout for {invoice_id}. Escalating.")
+             await db.invoices.update(invoice_id, {
+                 "status": "EXCEPTION",
+                 "correction_tracking.status": "TIMEOUT_ESCALATED"
+             })
+
+    async def manual_override(self, invoice_id: str, reason: str, approver: str):
+        """
+        Allows a user to override the VAT error and proceed to matching.
+        """
+        await db.invoices.update(invoice_id, {
+            "status": "MATCHING",
+            "validation.vat_valid": True, # Force valid
+            "correction_tracking.overridden": True,
+            "correction_tracking.override_reason": reason,
+            "correction_tracking.overridden_by": approver,
+            "correction_tracking.overridden_at": datetime.utcnow()
+        })
+        logger.info(f"VAT Correction overridden for {invoice_id} by {approver}")
 
 vat_corrector = VATCorrector()
