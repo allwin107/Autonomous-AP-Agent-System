@@ -58,13 +58,15 @@ class MatchingResults(MongoModel):
 
 class PaymentInstruction(MongoModel):
     """Final payment details derived from invoice and vendor data."""
+    payment_id: str
     bank_account_number: str
     sort_code: Optional[str] = None
     iban: Optional[str] = None
     amount: float
     currency: str
     payment_date: datetime
-    reference: str
+    reference: Optional[str] = None
+    status: str = "SCHEDULED"
 
 class InvoiceData(MongoModel):
     """The core extracted invoice data."""

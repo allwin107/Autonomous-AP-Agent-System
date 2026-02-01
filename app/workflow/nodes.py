@@ -8,6 +8,7 @@ from app.agents.extraction import extraction_agent
 from app.agents.validation import validation_agent
 from app.agents.matching import matching_agent
 from app.agents.approval import approval_agent
+from app.agents.payment import payment_agent
 
 logger = logging.getLogger(__name__)
 
@@ -38,9 +39,7 @@ async def approval_routing_node(state: InvoiceState) -> InvoiceState:
 
 async def payment_prep_node(state: InvoiceState) -> InvoiceState:
     logger.info(f"Node: Payment Prep for {state['invoice_id']}")
-    state['current_state'] = InvoiceStatus.PAYMENT_SCHEDULED
-    # Generate payment instruction
-    return state
+    return await payment_agent.payment_prep_node(state)
 
 async def exception_handler_node(state: InvoiceState) -> InvoiceState:
     logger.error(f"Node: Exception for {state['invoice_id']}. Errors: {state.get('errors')}")
