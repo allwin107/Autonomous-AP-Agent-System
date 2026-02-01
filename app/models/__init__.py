@@ -5,5 +5,5 @@ from app.models.purchase_order import PurchaseOrder, POStatus
 from app.models.audit import AuditEvent, Action, Decision, Actor, ActionType
 from app.models.config import CompanyConfig, ValidationRules, MatchingTolerances, ApprovalMatrix, ApprovalRule
 from app.models.grn import GoodsReceiptNote
-from app.models.memory import MemoryItem
+from app.models.memory import Memory, MemoryType
 from app.models.approval import ApprovalRequest

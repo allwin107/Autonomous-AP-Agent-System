@@ -5,6 +5,8 @@ from app.models.invoice import Invoice, InvoiceData
 from app.tools.vat_validator import vat_validator
 from app.tools.vendor_communication import vendor_communication
 from app.database import db
+from app.memory.semantic_memory import semantic_memory
+from app.models.memory import Memory, MemoryType
 
 logger = logging.getLogger(__name__)
 
@@ -84,6 +86,20 @@ class VATCorrector:
         }
         await db.invoices.update(invoice.invoice_id, update_data)
         logger.info(f"Correction request {email_id} sent for invoice {invoice.invoice_id}. Due: {due_date}")
+
+        # Store learning in Semantic Memory
+        try:
+            memory = Memory(
+                type=MemoryType.ERROR,
+                observation=f"VAT discrepancy on invoice {invoice.data.invoice_number} from {vendor.name}",
+                learning=f"Vendor {vendor.name} calculated VAT as £{error['current_vat']} instead of £{error['expected_vat']}. Standardize to 20%.",
+                vendor_name=vendor.name,
+                vendor_id=vendor.vendor_id,
+                confidence=1.0
+            )
+            await semantic_memory.store_learning(memory)
+        except Exception as e:
+            logger.warning(f"Failed to store learning in semantic memory: {e}")
 
     async def handle_timeout(self, invoice_id: str):
         """

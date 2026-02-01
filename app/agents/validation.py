@@ -9,6 +9,7 @@ from app.tools.duplicate_detector import duplicate_detector
 from app.tools.fraud_detector import fraud_detector
 from app.tools.verification_tool import verification_tool
 from app.agents.vat_corrector import vat_corrector
+from app.memory.semantic_memory import semantic_memory
 
 logger = logging.getLogger(__name__)
 
@@ -101,6 +102,17 @@ class ValidationAgent:
                 duplicate_of_id=dup_result.get("conflicting_invoice_id"),
                 flags=flags
             )
+            
+            # 6.5 Semantic Memory - Check for past lessons
+            try:
+                query = f"Vendor: {data.vendor_name} | VAT Gap: {not vat_result['valid']} | Flags: {', '.join(flags)}"
+                similar_memories = await semantic_memory.retrieve_similar_cases(query, limit=2)
+                for mem in similar_memories:
+                    logger.info(f"Retrieved similar memory: {mem['learning']}")
+                    if mem.get("type") == "ERROR" and mem.get("confidence", 0) > 0.8:
+                        validation_results.flags.append(f"PREVIOUS_PATTERN_MATCH: {mem['learning']}")
+            except Exception as e:
+                logger.warning(f"Semantic memory retrieval failed: {e}")
             
             # 7. Determine Next State
             next_state = InvoiceStatus.MATCHING # Default path
