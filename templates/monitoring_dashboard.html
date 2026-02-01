@@ -1,0 +1,266 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI AP Monitoring Dashboard</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg-color: #0f172a;
+            --card-bg: #1e293b;
+            --text-primary: #f8fafc;
+            --text-secondary: #94a3b8;
+            --accent-color: #3b82f6;
+            --success: #10b981;
+            --warning: #f59e0b;
+            --error: #ef4444;
+            --border-color: #334155;
+        }
+
+        body {
+            background-color: var(--bg-color);
+            color: var(--text-primary);
+            font-family: 'Inter', sans-serif;
+            margin: 0;
+            padding: 2rem;
+            line-height: 1.5;
+        }
+
+        .dashboard-container {
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 2rem;
+        }
+
+        .header h1 {
+            font-size: 1.875rem;
+            font-weight: 700;
+            background: linear-gradient(to right, #3b82f6, #8b5cf6);
+            -webkit-background-clip: text;
+            background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .metrics-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 1.5rem;
+            margin-bottom: 2rem;
+        }
+
+        .metric-card {
+            background-color: var(--card-bg);
+            border: 1px solid var(--border-color);
+            border-radius: 1rem;
+            padding: 1.5rem;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+            transition: transform 0.2s;
+        }
+
+        .metric-card:hover {
+            transform: translateY(-4px);
+        }
+
+        .metric-title {
+            color: var(--text-secondary);
+            font-size: 0.875rem;
+            font-weight: 500;
+            margin-bottom: 0.5rem;
+        }
+
+        .metric-value {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: var(--text-primary);
+        }
+
+        .metric-trend {
+            font-size: 0.75rem;
+            margin-top: 0.5rem;
+        }
+
+        .charts-container {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 1.5rem;
+            margin-bottom: 2rem;
+        }
+
+        .chart-card {
+            background-color: var(--card-bg);
+            border: 1px solid var(--border-color);
+            border-radius: 1rem;
+            padding: 1.5rem;
+        }
+
+        .chart-title {
+            font-size: 1rem;
+            font-weight: 600;
+            margin-bottom: 1.5rem;
+            color: var(--text-primary);
+        }
+
+        .status-badge {
+            padding: 0.25rem 0.75rem;
+            border-radius: 9999px;
+            font-size: 0.75rem;
+            font-weight: 600;
+        }
+
+        .status-success {
+            background: #064e3b;
+            color: #6ee7b7;
+        }
+
+        .status-warning {
+            background: #78350f;
+            color: #fcd34d;
+        }
+
+        .status-error {
+            background: #7f1d1d;
+            color: #fca5a5;
+        }
+
+        @media (max-width: 1024px) {
+            .charts-container {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <div class="dashboard-container">
+        <div class="header">
+            <h1>System Health & Monitoring</h1>
+            <div id="last-updated" style="color: var(--text-secondary); font-size: 0.875rem;">
+                Last updated: Just now
+            </div>
+        </div>
+
+        <!-- Metric Cards -->
+        <div class="metrics-grid">
+            <div class="metric-card">
+                <div class="metric-title">Success Rate (24h)</div>
+                <div class="metric-value" id="success-rate">--%</div>
+                <div class="metric-trend" style="color: var(--success)">↑ Stable</div>
+            </div>
+            <div class="metric-card">
+                <div class="metric-title">Active Exceptions</div>
+                <div class="metric-value" id="active-exceptions">0</div>
+                <div class="metric-trend" id="exception-status" style="color: var(--text-secondary)">Within limits</div>
+            </div>
+            <div class="metric-card">
+                <div class="metric-title">Estimated Cost (LLM)</div>
+                <div class="metric-value" id="total-cost">$0.00</div>
+                <div class="metric-trend">Invoice extractions</div>
+            </div>
+            <div class="metric-card">
+                <div class="metric-title">Compliance Level</div>
+                <div class="metric-value" id="compliance-pct">SLA OK</div>
+                <div class="metric-trend" style="color: var(--success)">High performance</div>
+            </div>
+        </div>
+
+        <!-- Charts Section -->
+        <div class="charts-container">
+            <div class="chart-card">
+                <div class="chart-title">Invoice Status Pipeline</div>
+                <canvas id="pipelineChart"></canvas>
+            </div>
+            <div class="chart-card">
+                <div class="chart-title">SLA Compliance Distribution</div>
+                <canvas id="slaChart"></canvas>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        async function fetchMetrics() {
+            try {
+                // In production, token should be handled properly
+                const response = await fetch('/api/metrics/system');
+                const data = await response.json();
+
+                const costResponse = await fetch('/api/metrics/costs');
+                const costData = await costResponse.json();
+
+                const slaResponse = await fetch('/api/metrics/sla');
+                const slaData = await slaResponse.json();
+
+                updateUI(data, costData, slaData);
+            } catch (error) {
+                console.error('Failed to fetch metrics:', error);
+            }
+        }
+
+        function updateUI(system, cost, sla) {
+            document.getElementById('success-rate').innerText = system.last_24h.success_rate + '%';
+            document.getElementById('active-exceptions').innerText = system.active_exceptions;
+            document.getElementById('total-cost').innerText = '$' + cost.total_estimated_cost.toFixed(2);
+
+            if (system.active_exceptions > 5) {
+                document.getElementById('active-exceptions').style.color = 'var(--error)';
+                document.getElementById('exception-status').innerText = 'Requires attention';
+                document.getElementById('exception-status').style.color = 'var(--error)';
+            }
+
+            // Status Pipeline Chart
+            new Chart(document.getElementById('pipelineChart'), {
+                type: 'bar',
+                data: {
+                    labels: Object.keys(system.status_distribution),
+                    datasets: [{
+                        label: 'Invoices',
+                        data: Object.values(system.status_distribution),
+                        backgroundColor: '#3b82f6',
+                        borderRadius: 8
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    scales: {
+                        y: { beginAtZero: true, grid: { color: '#334155' } },
+                        x: { grid: { display: false } }
+                    },
+                    plugins: { legend: { display: false } }
+                }
+            });
+
+            // SLA Chart
+            new Chart(document.getElementById('slaChart'), {
+                type: 'doughnut',
+                data: {
+                    labels: Object.keys(sla),
+                    datasets: [{
+                        data: Object.values(sla),
+                        backgroundColor: ['#10b981', '#f59e0b', '#ef4444'],
+                        borderWidth: 0
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    plugins: {
+                        legend: { position: 'bottom', labels: { color: '#94a3b8' } }
+                    }
+                }
+            });
+        }
+
+        // Initialize
+        fetchMetrics();
+        setInterval(fetchMetrics, 30000); // 30s refresh
+    </script>
+</body>
+
+</html>

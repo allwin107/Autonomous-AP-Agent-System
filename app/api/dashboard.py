@@ -1,53 +1,52 @@
-from fastapi import APIRouter, Depends
-from typing import Dict, Any
-
-from app.database import db
+from typing import Dict, Any, List
+from fastapi import APIRouter, Depends, HTTPException
 from app.api.auth import get_current_active_user, User
-from app.models.invoice import InvoiceStatus
+from app.monitoring.metrics import metrics_engine
 
-router = APIRouter(prefix="/api/dashboard", tags=["Dashboard"])
+router = APIRouter(prefix="/api/metrics", tags=["Monitoring"])
 
-@router.get("/metrics")
-async def get_metrics(current_user: User = Depends(get_current_active_user)):
-    """High level system health and volume metrics."""
-    return {
-        "system_status": "healthy",
-        "active_agents": ["ingestion", "extraction", "validation"], # Static for now
-        "uptime": "99.9%"
-    }
-
-@router.get("/invoices/stats")
-async def get_invoice_stats(current_user: User = Depends(get_current_active_user)):
-    """Counts by status."""
-    # Aggregation pipeline
-    pipeline = [
-        {"$group": {"_id": "$status", "count": {"$sum": 1}}}
-    ]
-    # Since we don't have aggregation in our simple Mongo wrapper yet, 
-    # we might need to add it to Database class or access collection directly.
-    # Accessing native collection for aggregation:
-    
+@router.get("/system")
+async def get_system_metrics():
+    """Get overall system health and status distribution."""
     try:
-        col = db.invoices.collection
-        cursor = col.aggregate(pipeline)
-        stats = {InvoiceStatus(doc["_id"]).value: doc["count"] for doc in await cursor.to_list(length=100)}
-        
-        # Fill zeros
-        final_stats = {status.value: 0 for status in InvoiceStatus}
-        final_stats.update(stats)
-        
-        return final_stats
+        # For demo, using a fixed company_id. In production, get from user profile.
+        company_id = "acme_corp"
+        return await metrics_engine.get_system_health(company_id)
     except Exception as e:
-        return {"error": str(e)}
+        raise HTTPException(status_code=500, detail=str(e))
 
-@router.get("/audit/{invoice_id}")
-async def get_audit_trail(invoice_id: str, current_user: User = Depends(get_current_active_user)):
-    # Assuming we have an audit repo or collection query
-    # db.audit is implemented as a repo log_action, but maybe not list?
-    # Let's add a basic find to the repo or use direct find here
-    
-    logs = await db.db["audit_logs"].find({"invoice_id": invoice_id}).to_list(100)
-    # Convert ObjectIds
-    for log in logs:
-        log["_id"] = str(log["_id"])
-    return logs
+@router.get("/agents/{agent_id}")
+async def get_agent_metrics(agent_id: str):
+    """Get performance metrics for a specific agent."""
+    try:
+        company_id = "acme_corp"
+        return await metrics_engine.get_agent_performance(agent_id, company_id)
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+@router.get("/costs")
+async def get_cost_metrics():
+    """Get LLM API cost metrics."""
+    try:
+        company_id = "acme_corp"
+        return await metrics_engine.get_cost_metrics(company_id)
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+@router.get("/sla")
+async def get_sla_metrics():
+    """Get SLA compliance distribution."""
+    try:
+        company_id = "acme_corp"
+        return await metrics_engine.get_sla_compliance(company_id)
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+@router.get("/fraud")
+async def get_fraud_metrics():
+    """Get fraud detection statistics."""
+    try:
+        company_id = "acme_corp"
+        return await metrics_engine.get_fraud_metrics(company_id)
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))

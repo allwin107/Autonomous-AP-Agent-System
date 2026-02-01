@@ -106,3 +106,13 @@ async def handle_approval_response(
 
     # Redirect back to dashboard
     return RedirectResponse(url="/ui/approvals", status_code=303)
+
+@router.get("/monitoring", response_class=HTMLResponse)
+async def monitoring_dashboard(request: Request):
+    """
+    Renders the real-time monitoring dashboard.
+    """
+    return templates.TemplateResponse(
+        "monitoring_dashboard.html",
+        {"request": request}
+    )
