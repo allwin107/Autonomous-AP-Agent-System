@@ -6,7 +6,7 @@ from app.models.invoice import InvoiceStatus
 from app.agents.ingestion import IngestionAgent # Ingestion is usually the trigger, but here if we include it in graph
 from app.agents.extraction import extraction_agent
 from app.agents.validation import validation_agent
-# from app.agents.matching import matching_agent # Not implemented yet
+from app.agents.matching import matching_agent
 
 logger = logging.getLogger(__name__)
 
@@ -29,10 +29,7 @@ async def validation_node(state: InvoiceState) -> InvoiceState:
 
 async def matching_node(state: InvoiceState) -> InvoiceState:
     logger.info(f"Node: Matching for {state['invoice_id']}")
-    # placeholder until Matching Agent is built
-    state['current_state'] = InvoiceStatus.APPROVAL_ROUTING
-    state['matching_results'] = {"status": "MATCHED", "details": "Auto-match (Placeholder)"}
-    return state
+    return await matching_agent.matching_node(state)
 
 async def approval_routing_node(state: InvoiceState) -> InvoiceState:
     logger.info(f"Node: Approval Routing for {state['invoice_id']}")
