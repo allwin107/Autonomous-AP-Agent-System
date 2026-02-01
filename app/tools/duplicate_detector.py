@@ -17,7 +17,7 @@ class DuplicateDetector:
         """
         
         # 1. Exact Match: Vendor + Invoice Number
-        existing_exact = await db.invoices.find({
+        existing_exact = await db.invoices.list({
             "data.vendor_name": vendor_name,
             "data.invoice_number": invoice_number,
             "invoice_id": {"$ne": invoice_id}
@@ -38,7 +38,7 @@ class DuplicateDetector:
         date_start = invoice_date - timedelta(days=3)
         date_end = invoice_date + timedelta(days=3)
         
-        existing_fuzzy = await db.invoices.find({
+        existing_fuzzy = await db.invoices.list({
             "data.vendor_name": vendor_name,
             "data.total": total,
             "data.invoice_date": {"$gte": date_start, "$lte": date_end},

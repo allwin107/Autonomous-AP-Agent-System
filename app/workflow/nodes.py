@@ -3,6 +3,7 @@ from typing import Dict, Any
 
 from app.workflow.state import InvoiceState
 from app.models.invoice import InvoiceStatus
+from app.database import db
 from app.agents.ingestion import IngestionAgent # Ingestion is usually the trigger, but here if we include it in graph
 from app.agents.extraction import extraction_agent
 from app.agents.validation import validation_agent

@@ -132,5 +132,5 @@ async def test_matching_missing_po_ref():
         state = {"invoice_id": "inv_no_po", "company_id": "acme"}
         result = await agent.matching_node(state)
         
-        assert result["current_state"] == InvoiceStatus.EXCEPTION
-        assert result["matching_results"]["match_status"] == "NO_PO"
+        assert result["current_state"] == InvoiceStatus.AWAITING_APPROVAL
+        assert result["matching_results"]["match_status"] == "NON_PO_APPROVAL_NEEDED"

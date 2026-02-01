@@ -93,7 +93,7 @@ class ExtractionAgent:
             # Download from GridFS
             try:
                 from bson import ObjectId
-                grid_out = await db.fs.open_download_stream(ObjectId(file_id))
+                grid_out = db.fs.open_download_stream(ObjectId(file_id))
                 content = await grid_out.read()
                 filename = grid_out.filename
             except Exception as e:

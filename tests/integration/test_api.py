@@ -59,7 +59,7 @@ async def test_upload_invoice():
              headers = {"Authorization": f"Bearer {token}"}
              
              # Mock Background Task (just verifying it doesn't crash, logic tested in workflow)
-             with patch("app.api.invoices.background_tasks") as mock_bg: 
+             with patch("app.api.invoices.trigger_workflow") as mock_workflow: 
                 # Note: FastAPI BackgroundTasks hard to mock directly in integration tests without overriding app dependency
                 # or just letting it run (it won't execute if we don't await/manage it, but here it adds to response)
                 # Actually, BackgroundTasks are executed after response. Tests dealing with them usually use specific TestClient patterns.
