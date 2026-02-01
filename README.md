@@ -16,8 +16,8 @@ An autonomous, multi-agent AI system designed to handle the end-to-end Accounts 
 
 Our system uses a specialized agent network coordinated by a central LangGraph state machine.
 
-- **Technical Deep-Dive**: [Technical Design Document](docs/technical_design_document.md)
-- **Data Model**: [ERD Diagram](docs/erd.md)
+- **Technical Deep-Dive**: [Technical Design Document](Technical_Design_Doc.md)
+- **Data Model**: [ERD Diagram](ERD_Diagram.md)
 
 ## Tech Stack
 
