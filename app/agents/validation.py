@@ -10,6 +10,7 @@ from app.tools.fraud_detector import fraud_detector
 from app.tools.verification_tool import verification_tool
 from app.agents.vat_corrector import vat_corrector
 from app.memory.semantic_memory import semantic_memory
+from app.memory.context_manager import context_manager
 
 logger = logging.getLogger(__name__)
 
@@ -105,8 +106,8 @@ class ValidationAgent:
             
             # 6.5 Semantic Memory - Check for past lessons
             try:
-                query = f"Vendor: {data.vendor_name} | VAT Gap: {not vat_result['valid']} | Flags: {', '.join(flags)}"
-                similar_memories = await semantic_memory.retrieve_similar_cases(query, limit=2)
+                context_query = await context_manager.prepare_context_for_llm(state, "VALIDATION: Find similar VAT/Vendor patterns")
+                similar_memories = await semantic_memory.retrieve_similar_cases(context_query, limit=2)
                 for mem in similar_memories:
                     logger.info(f"Retrieved similar memory: {mem['learning']}")
                     if mem.get("type") == "ERROR" and mem.get("confidence", 0) > 0.8:

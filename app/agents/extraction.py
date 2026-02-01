@@ -8,6 +8,7 @@ from app.database import db
 from app.models.invoice import Invoice, InvoiceStatus, InvoiceData, ValidationResults
 from app.tools.ocr_tool import ocr_tool
 from app.tools.groq_llm import groq_tool
+from app.memory.context_manager import context_manager
 
 logger = logging.getLogger(__name__)
 
@@ -115,7 +116,9 @@ class ExtractionAgent:
             await db.invoices.update(invoice_id, {"raw_text": raw_text})
 
             # 4. LLM Extraction
-            prompt = EXTRACTION_PROMPT_TEMPLATE.format(invoice_text=raw_text[:10000]) # Truncate if too long
+            state["raw_text"] = raw_text
+            context = await context_manager.prepare_context_for_llm(state, "EXTRACTION: Extract invoice fields")
+            prompt = EXTRACTION_PROMPT_TEMPLATE.format(invoice_text=context)
             extracted_json = groq_tool.generate_structured(prompt)
             
             # 5. Map to Model
