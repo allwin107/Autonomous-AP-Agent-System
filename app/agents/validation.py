@@ -7,6 +7,7 @@ from app.models.vendor import VerificationStatus
 from app.tools.vat_validator import vat_validator
 from app.tools.duplicate_detector import duplicate_detector
 from app.tools.fraud_detector import fraud_detector
+from app.tools.verification_tool import verification_tool
 
 logger = logging.getLogger(__name__)
 
@@ -57,7 +58,7 @@ class ValidationAgent:
             elif data.vendor_name:
                 vendor = await db.vendors.get_by_field("name", data.vendor_name)
 
-            if vendor and vendor.verification_status == VerificationStatus.VERIFIED:
+            if vendor and vendor.approval_status == "APPROVED":
                 vendor_approved = True
                 # Link vendor ID if not already linked
                 if not data.vendor_id:
@@ -65,7 +66,22 @@ class ValidationAgent:
                     await db.invoices.update(invoice_id, {"data.vendor_id": vendor.vendor_id})
             
             # 5. Fraud Analysis
-            fraud_result = fraud_detector.analyze_fraud_risk(data)
+            bank_change_detected = False
+            if vendor:
+                bank_change_detected = await fraud_detector.check_bank_details_change(vendor.vendor_id)
+                if bank_change_detected:
+                    logger.warning(f"Bank details changed for vendor {vendor.vendor_id}. Initiating verification.")
+                    await verification_tool.initiate_verification(
+                        invoice_id, 
+                        vendor.vendor_id, 
+                        reason="Recent Bank Details Change Detected"
+                    )
+            
+            fraud_result = fraud_detector.analyze_fraud_risk(
+                data, 
+                vendor=vendor, 
+                bank_change_detected=bank_change_detected
+            )
             
             # 6. Aggregate Results
             flags = fraud_result["flags"]
