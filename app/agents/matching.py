@@ -49,11 +49,13 @@ class MatchingAgent:
                 require_po_limit = config.validation_rules.require_po_above if config else 0
                 
                 if data.total > require_po_limit:
-                    msg = "PO Reference Missing"
-                    await self._update_invoice(invoice_id, InvoiceStatus.EXCEPTION, 
-                                               MatchingResults(has_po=False, match_status="NO_PO", details=msg))
-                    state["current_state"] = InvoiceStatus.EXCEPTION
-                    state["matching_results"] = {"has_po": False, "match_status": "NO_PO", "details": msg}
+                    msg = "Non-PO invoice above threshold. Manager approval required."
+                    # Route to AWAITING_APPROVAL instead of EXCEPTION
+                    # The Approval Node/UI handles strict approval
+                    await self._update_invoice(invoice_id, InvoiceStatus.AWAITING_APPROVAL, 
+                                               MatchingResults(has_po=False, match_status="NON_PO_APPROVAL_NEEDED", details=msg))
+                    state["current_state"] = InvoiceStatus.AWAITING_APPROVAL
+                    state["matching_results"] = {"has_po": False, "match_status": "NON_PO_APPROVAL_NEEDED", "details": msg}
                     return state
                 else:
                     # Small enough to bypass PO? -> Go to Approval Routing

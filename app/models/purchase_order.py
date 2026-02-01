@@ -1,6 +1,6 @@
 from datetime import datetime
 from enum import Enum
-from typing import List, Optional
+from typing import List, Optional, Dict, Any
 from pydantic import Field
 from app.models.base import MongoModel
 from app.models.invoice import LineItem
@@ -41,6 +41,7 @@ class PurchaseOrder(MongoModel):
     status: POStatus = Field(default=POStatus.ISSUED)
     
     notes: Optional[str] = None
+    metadata: Optional[Dict[str, Any]] = Field(default_factory=dict)
     created_at: datetime = Field(default_factory=datetime.utcnow)
     updated_at: datetime = Field(default_factory=datetime.utcnow)
 

@@ -10,7 +10,9 @@ from app.models.invoice import Invoice, InvoiceStatus, ValidationResults
 from app.workflow.graph import invoice_workflow
 from app.workflow.state import InvoiceState
 from app.guardrails.permissions import Permission
+from app.guardrails.permissions import Permission
 from app.guardrails.decorators import require_permission, enforce_sod
+from app.agents.po_creator import po_creator
 
 router = APIRouter(prefix="/api/approvals", tags=["Approvals"])
 
@@ -76,6 +78,14 @@ async def approve_invoice(
         details=f"Comments: {decision.comments}",
         invoice_id=invoice_id
     )
+
+    # Check for Non-PO Approval -> Create Retrospective PO
+    if invoice.matching and invoice.matching.match_status == "NON_PO_APPROVAL_NEEDED":
+        await po_creator.create_retrospective_po(
+            invoice_id, 
+            invoice.company_id, 
+            approved_by=current_user.username
+        )
 
     # Move State
     new_status = InvoiceStatus.PAYMENT_PREPARATION
