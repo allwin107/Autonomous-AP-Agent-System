@@ -4,7 +4,7 @@ import uvicorn
 import logging
 
 from app.config import settings
-from app.api import invoices, approvals, dashboard, admin, auth
+from app.api import invoices, approvals, dashboard, admin, auth, ui
 
 # Setup Logging
 logging.basicConfig(level=settings.LOG_LEVEL)
@@ -36,6 +36,7 @@ app.include_router(invoices.router)
 app.include_router(approvals.router)
 app.include_router(dashboard.router)
 app.include_router(admin.router)
+app.include_router(ui.router)
 
 # Health Check
 @app.get("/health")

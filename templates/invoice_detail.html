@@ -1,0 +1,136 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <title>Invoice {{ invoice.invoice_id }}</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+
+<body class="bg-gray-100 min-h-screen pb-10">
+    <div class="container mx-auto px-4 py-8">
+        <div class="mb-6 flex justify-between items-center">
+            <h1 class="text-3xl font-bold text-gray-800">Invoice: {{ invoice.invoice_id }}</h1>
+            <a href="/ui/approvals"
+                class="text-gray-600 hover:text-gray-900 border border-gray-300 px-4 py-2 rounded bg-white">
+                Back to Dashboard
+            </a>
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+
+            <!-- Left Column: Details -->
+            <div class="space-y-6">
+                <!-- Metadata Card -->
+                <div class="bg-white shadow rounded-lg p-6">
+                    <h2 class="text-xl font-semibold mb-4 text-gray-700 border-b pb-2">Details</h2>
+                    <div class="grid grid-cols-2 gap-4">
+                        <div>
+                            <p class="text-gray-600 text-sm">Vendor</p>
+                            <p class="font-medium">{{ invoice.data.vendor_name }}</p>
+                        </div>
+                        <div>
+                            <p class="text-gray-600 text-sm">Invoice Number</p>
+                            <p class="font-medium">{{ invoice.data.invoice_number }}</p>
+                        </div>
+                        <div>
+                            <p class="text-gray-600 text-sm">Date</p>
+                            <p class="font-medium">{{ invoice.data.invoice_date }}</p>
+                        </div>
+                        <div>
+                            <p class="text-gray-600 text-sm">Total</p>
+                            <p class="font-bold text-lg">{{ invoice.data.total }} {{ invoice.data.currency }}</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Validation Results -->
+                <div class="bg-white shadow rounded-lg p-6">
+                    <h2 class="text-xl font-semibold mb-4 text-gray-700 border-b pb-2">Validation & Risk</h2>
+                    {% if invoice.validation %}
+                    <div class="mb-3">
+                        <p class="text-sm text-gray-600">Fraud Score</p>
+                        <div class="w-full bg-gray-200 rounded-full h-2.5 dark:bg-gray-700">
+                            <div
+                                class="bg-{{ 'red' if invoice.validation.fraud_score > 0.5 else 'green' }}-600 h-2.5 rounded-full w-[{{ '%.0f'|format(invoice.validation.fraud_score * 100) }}%]">
+                            </div>
+                        </div>
+                        <span class="text-xs">{{ "%.0f"|format(invoice.validation.fraud_score * 100) }}% Risk</span>
+                    </div>
+                    <ul class="list-disc pl-5">
+                        {% for flag in invoice.validation.flags %}
+                        <li class="text-red-500 text-sm">{{ flag }}</li>
+                        {% endfor %}
+                        {% if not invoice.validation.flags %}
+                        <li class="text-green-500 text-sm">No flags raised.</li>
+                        {% endif %}
+                    </ul>
+                    {% else %}
+                    <p class="text-gray-500 italic">No validation data.</p>
+                    {% endif %}
+                </div>
+
+                <!-- Matching Results -->
+                <div class="bg-white shadow rounded-lg p-6">
+                    <h2 class="text-xl font-semibold mb-4 text-gray-700 border-b pb-2">3-Way Matching</h2>
+                    {% if invoice.matching %}
+                    <div class="flex items-center mb-2">
+                        <span class="font-bold mr-2">Status:</span>
+                        <span
+                            class="px-2 py-1 rounded text-white text-sm bg-{{ 'green' if invoice.matching.match_status == 'MATCHED' else 'orange' if invoice.matching.match_status == 'VARIANCE' else 'red' }}-500">
+                            {{ invoice.matching.match_status }}
+                        </span>
+                    </div>
+                    {% if invoice.matching.details %}
+                    <div class="bg-yellow-50 border-l-4 border-yellow-400 p-4 text-sm text-yellow-700 my-2">
+                        <p class="font-bold">Variance Details:</p>
+                        <p>{{ invoice.matching.details }}</p>
+                    </div>
+                    {% endif %}
+                    {% else %}
+                    <p class="text-gray-500 italic">No matching results.</p>
+                    {% endif %}
+                </div>
+            </div>
+
+            <!-- Right Column: Document & Action -->
+            <div class="space-y-6">
+                <!-- Document Viewer (Placeholder) -->
+                <div class="bg-white shadow rounded-lg p-6 h-96 flex flex-col">
+                    <h2 class="text-xl font-semibold mb-2 text-gray-700">Original Document</h2>
+                    <div class="flex-grow bg-gray-200 flex items-center justify-center rounded">
+                        <p class="text-gray-500">PDF Viewer Placeholder</p>
+                        <!-- In real app, embed via <iframe src="/api/invoices/{{invoice.invoice_id}}/file"></iframe> -->
+                    </div>
+                </div>
+
+                <!-- Action Panel -->
+                <div class="bg-white shadow rounded-lg p-6 border-t-4 border-blue-500">
+                    <h2 class="text-xl font-semibold mb-4 text-gray-700">Approval Decision</h2>
+
+                    <form action="/ui/approvals/{{ invoice.invoice_id}}/respond" method="POST">
+                        <div class="mb-4">
+                            <label class="block text-gray-700 text-sm font-bold mb-2">Comments</label>
+                            <textarea name="comments" rows="3"
+                                class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
+                                placeholder="Enter reason or notes..."></textarea>
+                        </div>
+
+                        <div class="flex space-x-4">
+                            <button type="submit" name="action" value="approve"
+                                class="flex-1 bg-green-500 hover:bg-green-700 text-white font-bold py-3 px-4 rounded focus:outline-none focus:shadow-outline transition duration-150">
+                                ✅ Approve
+                            </button>
+                            <button type="submit" name="action" value="reject"
+                                class="flex-1 bg-red-500 hover:bg-red-700 text-white font-bold py-3 px-4 rounded focus:outline-none focus:shadow-outline transition duration-150">
+                                ❌ Reject
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</body>
+
+</html>

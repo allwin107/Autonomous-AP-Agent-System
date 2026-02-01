@@ -13,6 +13,7 @@ google-api-python-client==3.7.2
 sentence-transformers==2.3.1
 python-dotenv==1.0.1
 python-multipart==0.0.7
+jinja2
 python-jose[cryptography]
 passlib[bcrypt]
 pytesseract
