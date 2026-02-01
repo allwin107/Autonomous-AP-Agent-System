@@ -1,33 +1,54 @@
-fastapi==0.109.2
-uvicorn[standard]==0.27.1
-pymongo==4.6.1
-motor==3.3.2
-pydantic==2.6.1
-pydantic-settings==2.1.0
-email-validator
-langgraph==0.0.21
-groq==0.4.2
-google-cloud-vision
-google-auth-oauthlib
-google-api-python-client==3.7.2
-sentence-transformers==2.3.1
-python-dotenv==1.0.1
-python-multipart==0.0.7
-jinja2
-python-jose[cryptography]
-passlib[bcrypt]
-pytesseract
-pdf2image
-Pillow
-pytest==8.0.0
-pytest-asyncio==0.23.5
-httpx==0.26.0
-black==24.1.1
-isort==5.13.2
-flake8==7.0.0
-pre-commit==3.6.1
-reportlab
-tiktoken
-pytest-cov
+# Core Web Framework and API handling
+fastapi==0.109.2 # High-performance web framework for APIs
+uvicorn[standard]==0.27.1 # ASGI server for running FastAPI
+
+# Database and Persistence
+pymongo==4.6.1 # Sync MongoDB driver
+motor==3.3.2 # Async MongoDB driver for Motor-based repositories
+
+# Data Validation and Configuration
+pydantic==2.6.1 # Data validation using Python type hints
+pydantic-settings==2.1.0 # Settings management using Pydantic
+email-validator # Form validation for email fields
+
+# AI Agents and Orchestration
+langgraph==0.0.21 # Stateful, multi-agent orchestration
+groq==0.4.2 # Groq Cloud API for high-speed LLM inference
+
+# Ingestion and Tools
+google-cloud-vision # Google Cloud Vision API for advanced image processing
+google-auth-oauthlib # OAuth 2.0 client for Google APIs
+google-api-python-client==3.7.2 # Core client for Google/Gmail integrations
+
+# Intelligence and Memory
+sentence-transformers==2.3.1 # Text embeddings for semantic memory
+tiktoken # Token counting for LLM context tracking
+
+# Utilities and Formatting
+python-dotenv==1.0.1 # Load environment variables from .env
+python-multipart==0.0.7 # Handle form-data for file uploads
+jinja2 # Template engine for HTML dashboards and emails
+python-jose[cryptography] # JWT creation and verification
+passlib[bcrypt] # Password hashing and verification
+
+# Document Processing and OCR
+pytesseract # Tesseract OCR wrapper for text extraction
+pdf2image # Convert PDF pages to images
+Pillow # Image manipulation library
+
+# Reporting
+reportlab # PDF generation for audit and reports
+
+# Development and Testing
+pytest==8.0.0 # Testing framework
+pytest-asyncio==0.23.5 # Testing async code
+pytest-cov # Code coverage reporting
+httpx==0.26.0 # Async HTTP client for integration testing
+
+# Code Quality and Linting
+black==24.1.1 # Code formatter
+isort==5.13.2 # Import sorter
+flake8==7.0.0 # Style guide enforcement
+pre-commit==3.6.1 # Git hook management
 
 
