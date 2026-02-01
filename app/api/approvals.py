@@ -105,4 +105,34 @@ async def reject_invoice(
     new_status = InvoiceStatus.REJECTED
     await db.invoices.update(invoice_id, {"status": new_status})
     
-    return {"message": "Invoice Rejected", "invoice_status": new_status}
+
+from fastapi.responses import HTMLResponse
+
+@router.get("/ui/{invoice_id}", response_class=HTMLResponse)
+async def get_approval_ui(invoice_id: str):
+    """Simple notification landing page for approvers."""
+    invoice = await db.invoices.get_by_field("invoice_id", invoice_id)
+    if not invoice:
+        return "<h1>Invoice not found</h1>"
+        
+    return f"""
+    <html>
+        <head><title>Approve Invoice {invoice_id}</title></head>
+        <body style="font-family: sans-serif; padding: 20px;">
+            <h1>Approval Request</h1>
+            <p><strong>Invoice ID:</strong> {invoice.invoice_id}</p>
+            <p><strong>Vendor:</strong> {invoice.data.vendor_name if invoice.data else 'N/A'}</p>
+            <p><strong>Amount:</strong> {invoice.data.total if invoice.data else 'N/A'}</p>
+            <p><strong>Status:</strong> {invoice.status}</p>
+            <hr/>
+            <form action="/api/approvals/{invoice_id}/approve" method="post">
+                <textarea name="comments" placeholder="Comments"></textarea><br/>
+                <button type="submit" style="background:green; color:white; padding:10px;">Approve</button>
+            </form>
+            <form action="/api/approvals/{invoice_id}/reject" method="post">
+                <textarea name="comments" placeholder="Reason"></textarea><br/>
+                <button type="submit" style="background:red; color:white; padding:10px;">Reject</button>
+            </form>
+        </body>
+    </html>
+    """

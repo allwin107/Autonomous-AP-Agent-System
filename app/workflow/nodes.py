@@ -7,6 +7,7 @@ from app.agents.ingestion import IngestionAgent # Ingestion is usually the trigg
 from app.agents.extraction import extraction_agent
 from app.agents.validation import validation_agent
 from app.agents.matching import matching_agent
+from app.agents.approval import approval_agent
 
 logger = logging.getLogger(__name__)
 
@@ -33,14 +34,7 @@ async def matching_node(state: InvoiceState) -> InvoiceState:
 
 async def approval_routing_node(state: InvoiceState) -> InvoiceState:
     logger.info(f"Node: Approval Routing for {state['invoice_id']}")
-    # Determine who needs to approve
-    # For demo, if risk > 0.5 or high value, requires human
-    # Set next state
-    if state.get('risk_score', 0) > 0.5 or state.get('human_approval_required'):
-        state['current_state'] = InvoiceStatus.AWAITING_APPROVAL
-    else:
-        state['current_state'] = InvoiceStatus.PAYMENT_PREPARATION
-    return state
+    return await approval_agent.approval_routing_node(state)
 
 async def payment_prep_node(state: InvoiceState) -> InvoiceState:
     logger.info(f"Node: Payment Prep for {state['invoice_id']}")
