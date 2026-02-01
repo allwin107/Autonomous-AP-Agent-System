@@ -1,3 +1,4 @@
+from typing import List
 from app.repositories.base import BaseRepository
 from app.models.audit import AuditEvent, Action, Actor, ActionType
 
@@ -30,3 +31,7 @@ class AuditLogger(BaseRepository[AuditEvent]):
             )
         )
         await self.create(event)
+
+    async def get_for_invoice(self, invoice_id: str) -> List[AuditEvent]:
+        """Retrieve all audit events for a specific invoice."""
+        return await self.get_all_by_field("invoice_id", invoice_id)

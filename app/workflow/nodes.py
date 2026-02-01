@@ -10,6 +10,7 @@ from app.agents.matching import matching_agent
 from app.agents.approval import approval_agent
 from app.agents.payment import payment_agent
 from app.agents.recording import recording_agent
+from app.agents.reflection import reflection_agent
 
 logger = logging.getLogger(__name__)
 
@@ -17,7 +18,10 @@ logger = logging.getLogger(__name__)
 
 async def recording_node(state: InvoiceState) -> InvoiceState:
     logger.info(f"Node: Accounting Recording for {state['invoice_id']}")
-    return await recording_agent.recording_node(state)
+    res = await recording_agent.recording_node(state)
+    # Trigger reflection on success
+    await reflection_agent.reflect_on_success(state['invoice_id'])
+    return res
 
 # Define Node Wrappers
 # These simple wrappers calling the agent's logic allow us to keep the agent code independent of LangGraph if needed
@@ -34,6 +38,14 @@ async def extraction_node(state: InvoiceState) -> InvoiceState:
 
 async def validation_node(state: InvoiceState) -> InvoiceState:
     logger.info(f"Node: Validation for {state['invoice_id']}")
+    # Apply prior learnings before/during validation
+    invoice = await db.invoices.get_by_field("invoice_id", state['invoice_id'])
+    if invoice:
+        hints = await reflection_agent.apply_learnings(invoice)
+        if hints:
+            logger.info(f"Applying {len(hints)} learning hints to {state['invoice_id']}")
+            state.setdefault("flags", []).extend(hints)
+            
     return await validation_agent.validation_node(state)
 
 async def matching_node(state: InvoiceState) -> InvoiceState:
@@ -52,6 +64,13 @@ async def exception_handler_node(state: InvoiceState) -> InvoiceState:
     logger.error(f"Node: Exception for {state['invoice_id']}. Errors: {state.get('errors')}")
     # Logic to notify or park the invoice
     state['current_state'] = InvoiceStatus.EXCEPTION
+    
+    # Trigger reflection on failure
+    await reflection_agent.reflect_on_failure(
+        state['invoice_id'], 
+        failure_type="WORKFLOW_EXCEPTION",
+        context=f"Errors: {state.get('errors')}"
+    )
     return state
 
 # Node Mapping for Graph
