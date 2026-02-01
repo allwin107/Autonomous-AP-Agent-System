@@ -1,34 +1,46 @@
-from contextlib import asynccontextmanager
 from fastapi import FastAPI
-from app.config import settings
-from app.database import db
+from fastapi.middleware.cors import CORSMiddleware
+import uvicorn
+import logging
 
-@asynccontextmanager
-async def lifespan(app: FastAPI):
-    # Startup
-    db.connect()
-    yield
-    # Shutdown
-    db.close()
+from app.config import settings
+from app.api import invoices, approvals, dashboard, admin, auth
+
+# Setup Logging
+logging.basicConfig(level=settings.LOG_LEVEL)
+logger = logging.getLogger(__name__)
 
 app = FastAPI(
-    title="AI Accounts Payable Employee",
-    description="Autonomous AI Agent System for Accounts Payable Automation",
-    version="1.0.0",
-    lifespan=lifespan
+    title="AI AP Employee API",
+    description="Backend API for Autonomous Accounts Payable Agent",
+    version="1.0.0"
 )
 
+# CORS Config
+origins = [
+    "http://localhost:3000",
+    "http://localhost:8000",
+]
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=origins,
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
+
+# Router Registration
+app.include_router(auth.router)
+app.include_router(invoices.router)
+app.include_router(approvals.router)
+app.include_router(dashboard.router)
+app.include_router(admin.router)
+
+# Health Check
 @app.get("/health")
 async def health_check():
-    return {
-        "status": "healthy",
-        "environment": settings.ENVIRONMENT,
-        "database": "connected" if db.client else "disconnected"
-    }
+    return {"status": "ok", "environment": settings.ENVIRONMENT}
 
-@app.get("/")
-async def root():
-    return {
-        "message": "Welcome to AI CA Employee System",
-        "docs": "/docs"
-    }
+if __name__ == "__main__":
+    uvicorn.run("app.main:app", host="0.0.0.0", port=8000, reload=True)
