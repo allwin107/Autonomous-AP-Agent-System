@@ -152,4 +152,7 @@ cython_debug/
 .idea/
 
 #Dev Files
-AI_AP_Employee_PRD.md
+docs/
+
+#Obsidian
+.obsidian
