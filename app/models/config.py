@@ -47,6 +47,12 @@ class GLMapping(MongoModel):
         "Software": "7400"
     }
 
+class SLASettings(MongoModel):
+    default_approval_sla_hours: int = 48
+    payment_warning_days: int = 7
+    payment_urgent_days: int = 3
+    payment_critical_hours: int = 24
+
 class CompanyConfig(MongoModel):
     """
     Multi-tenant configuration document.
@@ -60,6 +66,7 @@ class CompanyConfig(MongoModel):
     matching_tolerances: MatchingTolerances = Field(default_factory=MatchingTolerances)
     approval_matrix: ApprovalMatrix = Field(default_factory=ApprovalMatrix)
     gl_mapping: GLMapping = Field(default_factory=GLMapping)
+    sla_settings: SLASettings = Field(default_factory=SLASettings)
     
     system_enabled: bool = True
     notification_email: Optional[str] = None

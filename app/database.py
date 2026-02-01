@@ -18,11 +18,17 @@ class Database:
     vendors: VendorRepository = None
     audit: AuditLogger = None
     config: ConfigRepository = None
+    _db = None
+    
+    @property
+    def db(self):
+        return self._db
     
     def connect(self):
         """Initialize database connection and repositories."""
         self.client = AsyncIOMotorClient(settings.MONGODB_URL)
-        db = self.client[settings.DB_NAME]
+        self._db = self.client[settings.DB_NAME]
+        db = self._db
         self.fs = AsyncIOMotorGridFSBucket(db)
         
         # Initialize repositories with their respective collections and models

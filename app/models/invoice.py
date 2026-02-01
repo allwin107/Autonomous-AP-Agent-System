@@ -116,6 +116,11 @@ class Invoice(MongoModel):
     matching: Optional[MatchingResults] = None
     payment: Optional[PaymentInstruction] = None
     
+    # SLA & Escalation
+    urgency: str = Field("NORMAL", description="NORMAL, WARNING, URGENT, CRITICAL")
+    sla_status: str = Field("COMPLIANT", description="COMPLIANT, AT_RISK, BREACHED")
+    escalation_history: List[Dict[str, Any]] = []
+    
     # Metadata
     created_at: datetime = Field(default_factory=datetime.utcnow)
     updated_at: datetime = Field(default_factory=datetime.utcnow)
